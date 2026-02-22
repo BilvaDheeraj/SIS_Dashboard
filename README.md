@@ -1,4 +1,4 @@
-# Student Performance Dashboard (openSIS Inspired)
+# Student Performance Dashboard 
 
 An interactive, end-to-end data analytics and visualization pipeline representing a Student Information System (SIS). This project encompasses mock data generation, data cleansing, exploratory data analysis (EDA), and a fully interactive Streamlit dashboard featuring predictive "At-Risk" student insights.
 
