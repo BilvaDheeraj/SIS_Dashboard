@@ -51,6 +51,44 @@ def run_eda():
     fig_box.write_html("data/visualizations/grade_outliers_box.html")
     print("Grade outliers box plot saved.")
     
+    # Distribution Analysis (Pie Charts): Illustrate grade spread across student populations
+    grade_counts = df['Letter_Grade'].value_counts().reset_index()
+    grade_counts.columns = ['Letter_Grade', 'Count']
+    grade_counts['Letter_Grade'] = pd.Categorical(grade_counts['Letter_Grade'], categories=['A', 'B', 'C', 'D', 'F'], ordered=True)
+    grade_counts = grade_counts.sort_values('Letter_Grade')
+    
+    fig_pie = px.pie(grade_counts, names="Letter_Grade", values="Count",
+                     title="Overall Grade Spread (Letter Grades)",
+                     color="Letter_Grade", color_discrete_map={'A':'#00cc96', 'B':'#636efa', 'C':'#fecb52', 'D':'#ffa15a', 'F':'#ef553b'})
+    fig_pie.write_html("data/visualizations/grade_spread_pie.html")
+    print("Grade spread pie chart saved.")
+
+    # Trend Analysis (Line Charts): Track semester-wise performance progressions
+    def parse_semester(s):
+        parts = str(s).split()
+        if len(parts) == 2:
+            season, year = parts
+            return int(year) * 10 + (1 if season == 'Spring' else (2 if season == 'Summer' else 3))
+        return 0
+        
+    trend_data_dept = df.groupby(['Semester', 'Department'])['Final_Grade'].mean().reset_index()
+    trend_data_dept['SortKey'] = trend_data_dept['Semester'].apply(parse_semester)
+    trend_data_dept = trend_data_dept.sort_values('SortKey')
+    
+    fig_trend = px.line(trend_data_dept, x="Semester", y="Final_Grade", color="Department",
+                        title="Semester-wise Performance Progression by Department", markers=True)
+    fig_trend.write_html("data/visualizations/semester_trend_analysis.html")
+    print("Semester-wise trend analysis line chart saved.")
+
+    # Comparison Analysis (Bar Charts): Facilitate departmental and cohort comparisons
+    df['AdmissionYear_Str'] = df['AdmissionYear'].astype(str)
+    compare_data = df.groupby(['Department', 'AdmissionYear_Str'])['Final_Grade'].mean().reset_index()
+    compare_data = compare_data.sort_values('AdmissionYear_Str')
+    fig_bar = px.bar(compare_data, x="Department", y="Final_Grade", color="AdmissionYear_Str", barmode="group",
+                     title="Average Final Grade by Department and Admission Year (Cohort)")
+    fig_bar.write_html("data/visualizations/department_cohort_comparison.html")
+    print("Departmental and cohort comparison bar chart saved.")
+
     # Task 2.2: Correlation and Comparative Analysis
     print("\nRunning correlation tests...")
     
@@ -71,6 +109,13 @@ def run_eda():
                              title="Hours Spent on LMS vs Final Grade")
     fig_scatter.write_html("data/visualizations/lms_vs_grades_scatter.html")
     print("Correlation scatter plot saved.")
+
+    # Pattern/Correlation Analysis (Heatmaps): Map attendance levels against academic outcomes
+    fig_heatmap = px.imshow(corr_matrix, text_auto=".2f", aspect="auto",
+                            title="Correlation Heatmap of Academic Metrics",
+                            color_continuous_scale="RdBu_r", zmin=-1, zmax=1)
+    fig_heatmap.write_html("data/visualizations/correlation_heatmap.html")
+    print("Correlation heatmap saved.")
     
     print("\nEDA COMPLETE. Check data/reports/ and data/visualizations/")
 

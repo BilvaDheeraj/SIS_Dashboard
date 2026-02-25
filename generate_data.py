@@ -23,7 +23,7 @@ def generate_data():
             'StudentID': f'STU{i:04d}',
             'Name': fake.name(),
             'Age': random.randint(18, 26),
-            'Gender': random.choice(['M', 'F', 'Other']),
+            'Gender': random.choice(['M', 'F', 'Other']),0
             'Department': random.choice(departments),
             'AdmissionYear': random.randint(2019, 2024)
         })

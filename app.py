@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="openSIS Student Performance Dashboard", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Student Performance Dashboard", layout="wide", initial_sidebar_state="expanded")
 
 # --- Custom Styling for Premium openSIS Feel ---
 st.markdown("""
@@ -57,7 +57,7 @@ def load_data():
 df = load_data()
 
 st.title("🎓 Student Performance & Analytics Dashboard")
-st.markdown("*Modeled after openSIS - Empowering Educational Insights*")
+st.markdown("*  Empowering Educational Insights*")
 
 if df.empty:
     st.error("Data not found! Please run `data_pipeline.py` first.")
@@ -159,6 +159,65 @@ with c2:
       
     fig_sankey.update_layout(margin=dict(t=30, l=0, r=0, b=0), plot_bgcolor='rgba(0,0,0,0)')
     st.plotly_chart(fig_sankey, use_container_width=True)
+
+st.divider()
+
+# PHASE 3: NEW EDA VISUALS
+c_eda1, c_eda2 = st.columns(2)
+
+with c_eda1:
+    st.subheader("📈 Performance Trend (Task 3.2)")
+    def parse_semester(s):
+        parts = str(s).split()
+        if len(parts) == 2:
+            season, year = parts
+            return int(year) * 10 + (1 if season == 'Spring' else (2 if season == 'Summer' else 3))
+        return 0
+        
+    trend_data_dept = filtered_df.groupby(['Semester', 'Department'])['Final_Grade'].mean().reset_index()
+    trend_data_dept['SortKey'] = trend_data_dept['Semester'].apply(parse_semester)
+    trend_data_dept = trend_data_dept.sort_values('SortKey')
+    
+    fig_trend = px.line(trend_data_dept, x="Semester", y="Final_Grade", color="Department",
+                        title="Semester-wise Performance Progression", markers=True)
+    fig_trend.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+with c_eda2:
+    st.subheader("📊 Cohort Comparison (Task 3.2)")
+    compare_df = filtered_df.copy()
+    compare_df['AdmissionYear_Str'] = compare_df['AdmissionYear'].astype(str)
+    compare_data = compare_df.groupby(['Department', 'AdmissionYear_Str'])['Final_Grade'].mean().reset_index()
+    compare_data = compare_data.sort_values('AdmissionYear_Str')
+    fig_bar = px.bar(compare_data, x="Department", y="Final_Grade", color="AdmissionYear_Str", barmode="group",
+                     title="Average Final Grade by Department and Cohort")
+    fig_bar.update_layout(plot_bgcolor='rgba(0,0,0,0)')
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+st.divider()
+
+c_eda3, c_eda4 = st.columns(2)
+
+with c_eda3:
+    st.subheader("🥧 Grade Distribution (Task 3.2)")
+    grade_counts = filtered_df['Letter_Grade'].value_counts().reset_index()
+    grade_counts.columns = ['Letter_Grade', 'Count']
+    grade_counts['Letter_Grade'] = pd.Categorical(grade_counts['Letter_Grade'], categories=['A', 'B', 'C', 'D', 'F'], ordered=True)
+    grade_counts = grade_counts.sort_values('Letter_Grade')
+    
+    fig_pie = px.pie(grade_counts, names="Letter_Grade", values="Count",
+                     title="Overall Grade Spread",
+                     color="Letter_Grade", color_discrete_map={'A':'#00cc96', 'B':'#636efa', 'C':'#fecb52', 'D':'#ffa15a', 'F':'#ef553b'})
+    st.plotly_chart(fig_pie, use_container_width=True)
+
+with c_eda4:
+    st.subheader("🔥 Correlation Matrix (Task 3.2)")
+    vars_to_correlate = ['LMS_Hours', 'Attendance_Rate', 'Midterm_Grade', 'Final_Grade']
+    corr_matrix = filtered_df[vars_to_correlate].corr(method='pearson')
+    fig_heatmap = px.imshow(corr_matrix, text_auto=".2f", aspect="auto",
+                            title="Correlation Heatmap",
+                            color_continuous_scale="RdBu_r", zmin=-1, zmax=1)
+    st.plotly_chart(fig_heatmap, use_container_width=True)
 
 st.divider()
 
